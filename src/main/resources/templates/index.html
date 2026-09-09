@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PostgreSQL SQL → Mermaid ERD</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<main class="container">
+    <header>
+        <nav class="top-nav">
+            <a href="/" class="active">SQL → ER図</a>
+            <a href="/sequence">Java → シーケンス図</a>
+        </nav>
+        <h1>PostgreSQL SQL → Mermaid ERD</h1>
+        <p>SELECT文に登場するテーブルだけを抽出し、JOIN条件から関係を推定します。DBの外部キー制約は必須ではありません。</p>
+    </header>
+
+    <section class="panel">
+        <label for="sqlInput">SQL</label>
+        <textarea id="sqlInput" spellcheck="false" placeholder="SELECT ...\nFROM users u\nJOIN orders o ON o.user_id = u.id"></textarea>
+        <div class="actions">
+            <button id="generateButton" class="primary">ER図を生成</button>
+            <button id="sampleButton" class="secondary">サンプルSQL</button>
+        </div>
+        <div id="errorBox" class="message error hidden"></div>
+        <div id="warningBox" class="message warning hidden"></div>
+        <div id="tableBox" class="message info hidden"></div>
+    </section>
+
+    <section class="panel">
+        <div class="section-title">
+            <h2>Mermaid</h2>
+            <div class="actions compact">
+                <button id="copyButton" class="secondary" disabled>コピー</button>
+            </div>
+        </div>
+        <textarea id="mermaidText" class="mermaid-text" spellcheck="false" readonly></textarea>
+    </section>
+
+    <section class="panel">
+        <h2>プレビュー</h2>
+        <div id="preview" class="preview empty">ER図を生成するとここに表示されます。</div>
+    </section>
+</main>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
