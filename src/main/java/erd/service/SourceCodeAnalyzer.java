@@ -63,6 +63,7 @@ public class SourceCodeAnalyzer {
 	private static final Set<String> SERVICE_ANNOTATIONS = Set.of("Service");
 	private static final Set<String> COMPONENT_ANNOTATIONS = Set.of("Component");
 	private static final Set<String> REPOSITORY_ANNOTATIONS = Set.of("Repository");
+	private static final List<String> REPOSITORY_NAME_SUFFIXES = List.of("Repository", "Dao");
 	private static final Set<String> MAPPING_ANNOTATIONS = Set.of(
 			"RequestMapping", "GetMapping", "PostMapping", "PutMapping", "DeleteMapping", "PatchMapping");
 
@@ -76,7 +77,7 @@ public class SourceCodeAnalyzer {
 						component.simpleName(),
 						component.file().toString(),
 						component.methods().stream()
-								.filter(method -> !method.httpMethods().isEmpty() || !method.paths().isEmpty())
+								.filter(method -> hasMappingAnnotation(method.declaration()))
 								.map(method -> new EndpointInfo(method.name(), method.httpMethods(), method.paths()))
 								.toList()))
 				.toList();
@@ -119,7 +120,7 @@ public class SourceCodeAnalyzer {
 						continue; // inner class is outside the target Spring layer model
 					}
 
-					ComponentLayer layer = detectLayer(type.getAnnotations());
+					ComponentLayer layer = detectLayer(type);
 					if (layer == null) {
 						continue;
 					}
@@ -146,7 +147,7 @@ public class SourceCodeAnalyzer {
 	}
 
 	private JavaComponent toComponent(String packageName, Path file, ClassOrInterfaceDeclaration type,
-			ComponentLayer layer) {
+									  ComponentLayer layer) {
 		Map<String, String> dependencies = new LinkedHashMap<>();
 		for (FieldDeclaration field : type.getFields()) {
 			for (VariableDeclarator variable : field.getVariables()) {
@@ -204,8 +205,8 @@ public class SourceCodeAnalyzer {
 				.orElse("");
 	}
 
-	private ComponentLayer detectLayer(NodeList<AnnotationExpr> annotations) {
-		for (AnnotationExpr annotation : annotations) {
+	private ComponentLayer detectLayer(ClassOrInterfaceDeclaration type) {
+		for (AnnotationExpr annotation : type.getAnnotations()) {
 			String name = simpleAnnotationName(annotation);
 			if (CONTROLLER_ANNOTATIONS.contains(name)) {
 				return ComponentLayer.CONTROLLER;
@@ -220,6 +221,11 @@ public class SourceCodeAnalyzer {
 				return ComponentLayer.REPOSITORY;
 			}
 		}
+
+		String typeName = type.getNameAsString();
+		if (REPOSITORY_NAME_SUFFIXES.stream().anyMatch(typeName::endsWith)) {
+			return ComponentLayer.REPOSITORY;
+		}
 		return null;
 	}
 
@@ -228,14 +234,14 @@ public class SourceCodeAnalyzer {
 		for (AnnotationExpr annotation : annotations) {
 			String name = simpleAnnotationName(annotation);
 			switch (name) {
-			case "GetMapping" -> methods.add("GET");
-			case "PostMapping" -> methods.add("POST");
-			case "PutMapping" -> methods.add("PUT");
-			case "DeleteMapping" -> methods.add("DELETE");
-			case "PatchMapping" -> methods.add("PATCH");
-			case "RequestMapping" -> methods.addAll(extractRequestMethods(annotation));
-			default -> {
-			}
+				case "GetMapping" -> methods.add("GET");
+				case "PostMapping" -> methods.add("POST");
+				case "PutMapping" -> methods.add("PUT");
+				case "DeleteMapping" -> methods.add("DELETE");
+				case "PatchMapping" -> methods.add("PATCH");
+				case "RequestMapping" -> methods.addAll(extractRequestMethods(annotation));
+				default -> {
+				}
 			}
 		}
 		return List.copyOf(methods);
@@ -413,4 +419,10 @@ public class SourceCodeAnalyzer {
 		}
 		return text;
 	}
+	boolean hasMappingAnnotation(MethodDeclaration method) {
+		return method.getAnnotations().stream()
+				.map(this::simpleAnnotationName)
+				.anyMatch(name -> name.endsWith("Mapping"));
+	}
+
 }

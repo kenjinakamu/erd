@@ -25,7 +25,7 @@ public class SequenceApiController {
 	private final SequenceDiagramService sequenceDiagramService;
 
 	public SequenceApiController(SourceCodeAnalyzer sourceCodeAnalyzer,
-			SequenceDiagramService sequenceDiagramService) {
+								 SequenceDiagramService sequenceDiagramService) {
 		this.sourceCodeAnalyzer = sourceCodeAnalyzer;
 		this.sequenceDiagramService = sequenceDiagramService;
 	}
@@ -47,7 +47,7 @@ public class SequenceApiController {
 			throw new IllegalArgumentException("Javaソースのパス、コントローラ、エンドポイントを指定してください。");
 		}
 		return sequenceDiagramService.generate(request.sourcePath(), request.controllerClass(),
-				request.endpointMethod());
+				request.endpointMethod(), request.excludedClasses());
 	}
 
 	@ExceptionHandler(IllegalArgumentException.class)

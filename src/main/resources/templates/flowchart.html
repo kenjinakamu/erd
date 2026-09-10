@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Spring Java → Mermaid Sequence Diagram</title>
+    <title>Spring Java → Mermaid Flowchart</title>
     <link rel="stylesheet" href="/css/app.css">
 </head>
-<body class="sequence-page">
+<body class="sequence-page flowchart-page">
 <main class="container">
     <header>
         <nav class="top-nav">
             <a href="/">SQL → ER図</a>
-            <a href="/sequence" class="active">Java → シーケンス図</a>
-            <a href="/flowchart">Java → フローチャート</a>
+            <a href="/sequence">Java → シーケンス図</a>
+            <a href="/flowchart" class="active">Java → フローチャート</a>
         </nav>
-        <h1>Spring Java → Mermaid Sequence Diagram</h1>
-        <p>Javaソースのディレクトリを指定し、ControllerとEndpointを選択して、SpringのController / Service / Component / Repository間の呼び出しを解析します。</p>
+        <h1>Spring Java → Mermaid Flowchart</h1>
+        <p>Javaソースのディレクトリを指定し、ControllerとEndpointを選択して、Endpoint内のIF文・SWITCH文を解析した縦方向のフローチャートを生成します。繰り返し構造はフローとして表現しません。</p>
     </header>
 
     <section class="panel">
@@ -41,14 +41,8 @@
         </select>
 
         <div id="endpointBox" class="message info hidden"></div>
-
-        <label for="excludedClasses">除外クラス</label>
-        <textarea id="excludedClasses" class="exclude-classes" spellcheck="false" disabled
-                  placeholder="ExampleService&#10;ExampleComponent&#10;ExampleRepository"></textarea>
-        <p class="field-help">パッケージ名は付けず、除外したいクラス名を改行区切りで入力してください。クラス名が完全一致した場合のみシーケンス図から除外します。</p>
-
         <div class="actions">
-            <button id="sequenceButton" class="primary" disabled>シーケンス図生成</button>
+            <button id="flowchartButton" class="primary" disabled>フローチャート作成</button>
         </div>
         <div id="generateErrorBox" class="message error hidden"></div>
         <div id="generateWarningBox" class="message warning hidden"></div>
@@ -66,9 +60,9 @@
 
     <section class="panel">
         <h2>プレビュー</h2>
-        <div id="preview" class="preview empty">Endpointを選択してシーケンス図を生成するとここに表示されます。</div>
+        <div id="preview" class="preview empty">Endpointを選択してフローチャートを作成するとここに表示されます。</div>
     </section>
 </main>
-<script type="module" src="/js/sequence.js?v=20260910-3"></script>
+<script type="module" src="/js/flowchart.js?v=20260910-3"></script>
 </body>
 </html>

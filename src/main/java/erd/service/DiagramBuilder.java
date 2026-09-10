@@ -34,12 +34,14 @@ final class DiagramBuilder {
 	private final List<String> warnings;
 	private final Map<String, JavaComponent> participants = new LinkedHashMap<>();
 	private final List<String> flowLines = new ArrayList<>();
+	private final Set<String> excludedClasses;
 	private int callCount;
 
-	DiagramBuilder(JavaComponent controller, SourceModel model, List<String> warnings) {
+	DiagramBuilder(JavaComponent controller, SourceModel model, List<String> warnings, Set<String> excludedClasses) {
 		this.controller = controller;
 		this.model = model;
 		this.warnings = warnings;
+		this.excludedClasses = excludedClasses == null ? Set.of() : excludedClasses;
 		participants.put(controller.qualifiedName(), controller);
 	}
 
@@ -80,6 +82,9 @@ final class DiagramBuilder {
 
 			Target target = resolveTarget(caller, method, call);
 			if (target == null || target.component().qualifiedName().equals(caller.qualifiedName())) {
+				continue;
+			}
+			if (excludedClasses.contains(target.component().simpleName())) {
 				continue;
 			}
 			if (!allowedLayerTransition(caller.layer(), target.component().layer())) {
@@ -147,11 +152,21 @@ final class DiagramBuilder {
 			return null;
 		}
 
-		JavaComponent selected = selectCandidate(caller, candidates);
-		if (candidates.size() > 1) {
+		List<JavaComponent> exactCandidates = exactTypeNameCandidates(type, candidates);
+		List<JavaComponent> selectionPool = exactCandidates.isEmpty() ? candidates : exactCandidates;
+		JavaComponent selected = selectCandidate(caller, selectionPool);
+		if (exactCandidates.size() > 1) {
 			warnings.add("依存型 " + type + " に複数の候補があるため " + selected.qualifiedName() + " を使用しました。");
 		}
 		return new Target(selected);
+	}
+
+	private List<JavaComponent> exactTypeNameCandidates(String type, List<JavaComponent> candidates) {
+		String simpleTypeName = type.contains(".") ? type.substring(type.lastIndexOf('.') + 1) : type;
+		return candidates.stream()
+				.filter(candidate -> candidate.simpleName().equals(simpleTypeName))
+				.distinct()
+				.toList();
 	}
 
 	private JavaComponent selectCandidate(JavaComponent caller, List<JavaComponent> candidates) {
@@ -164,15 +179,15 @@ final class DiagramBuilder {
 
 	private boolean allowedLayerTransition(ComponentLayer from, ComponentLayer to) {
 		return switch (from) {
-		case CONTROLLER -> to == ComponentLayer.SERVICE
-				|| to == ComponentLayer.COMPONENT
-				|| to == ComponentLayer.REPOSITORY;
-		case SERVICE -> to == ComponentLayer.SERVICE
-				|| to == ComponentLayer.COMPONENT
-				|| to == ComponentLayer.REPOSITORY;
-		case COMPONENT -> to == ComponentLayer.COMPONENT
-				|| to == ComponentLayer.REPOSITORY;
-		case REPOSITORY -> false;
+			case CONTROLLER -> to == ComponentLayer.SERVICE
+					|| to == ComponentLayer.COMPONENT
+					|| to == ComponentLayer.REPOSITORY;
+			case SERVICE -> to == ComponentLayer.SERVICE
+					|| to == ComponentLayer.COMPONENT
+					|| to == ComponentLayer.REPOSITORY;
+			case COMPONENT -> to == ComponentLayer.COMPONENT
+					|| to == ComponentLayer.REPOSITORY;
+			case REPOSITORY -> false;
 		};
 	}
 
@@ -209,10 +224,10 @@ final class DiagramBuilder {
 
 	private int layerOrder(ComponentLayer layer) {
 		return switch (layer) {
-		case CONTROLLER -> 0;
-		case SERVICE -> 1;
-		case COMPONENT -> 2;
-		case REPOSITORY -> 3;
+			case CONTROLLER -> 0;
+			case SERVICE -> 1;
+			case COMPONENT -> 2;
+			case REPOSITORY -> 3;
 		};
 	}
 

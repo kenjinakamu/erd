@@ -1,7 +1,9 @@
 package erd.service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -21,7 +23,7 @@ public class SequenceDiagramService {
 		this.sourceCodeAnalyzer = sourceCodeAnalyzer;
 	}
 
-	public SequenceResponse generate(String sourcePath, String controllerClass, String endpointMethod) {
+	public SequenceResponse generate(String sourcePath, String controllerClass, String endpointMethod, List<String> excludedClasses) {
 		if (StringUtils.isBlank(controllerClass)) {
 			throw new IllegalArgumentException("コントローラを選択してください。");
 		}
@@ -38,13 +40,27 @@ public class SequenceDiagramService {
 		List<String> warnings = new ArrayList<>(model.warnings());
 		JavaMethod entryMethod = controller.methods().stream()
 				.filter(method -> method.name().equals(endpointMethod))
-				.filter(method -> !method.httpMethods().isEmpty() || !method.paths().isEmpty())
+				.filter(method -> sourceCodeAnalyzer.hasMappingAnnotation(method.declaration()))
 				.findFirst()
 				.orElseThrow(() -> new IllegalArgumentException(
 						"指定したエンドポイントが見つかりません: " + endpointMethod));
 
-		DiagramBuilder diagram = new DiagramBuilder(controller, model, warnings);
+		Set<String> exclusions = normalizeExcludedClasses(excludedClasses);
+		DiagramBuilder diagram = new DiagramBuilder(controller, model, warnings, exclusions);
 		diagram.appendEndpoint(entryMethod);
 		return new SequenceResponse(diagram.build(), warnings.stream().distinct().toList());
+	}
+
+	private Set<String> normalizeExcludedClasses(List<String> excludedClasses) {
+		if (excludedClasses == null || excludedClasses.isEmpty()) {
+			return Set.of();
+		}
+		Set<String> result = new LinkedHashSet<>();
+		for (String className : excludedClasses) {
+			if (StringUtils.isNotBlank(className)) {
+				result.add(className.trim());
+			}
+		}
+		return Set.copyOf(result);
 	}
 }

@@ -14,4 +14,9 @@ public class PageController {
     public String sequence() {
         return "sequence";
     }
+
+    @GetMapping("/flowchart")
+    public String flowchart() {
+        return "flowchart";
+    }
 }

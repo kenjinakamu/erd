@@ -10,9 +10,8 @@ const sourcePath = document.getElementById('sourcePath');
 const scanButton = document.getElementById('scanButton');
 const controllerSelect = document.getElementById('controllerSelect');
 const endpointSelect = document.getElementById('endpointSelect');
-const sequenceButton = document.getElementById('sequenceButton');
+const flowchartButton = document.getElementById('flowchartButton') || document.getElementById('sequenceButton');
 const endpointBox = document.getElementById('endpointBox');
-const excludedClasses = document.getElementById('excludedClasses');
 const scanErrorBox = document.getElementById('scanErrorBox');
 const scanWarningBox = document.getElementById('scanWarningBox');
 const generateErrorBox = document.getElementById('generateErrorBox');
@@ -20,6 +19,30 @@ const generateWarningBox = document.getElementById('generateWarningBox');
 const mermaidText = document.getElementById('mermaidText');
 const preview = document.getElementById('preview');
 const copyButton = document.getElementById('copyButton');
+
+const requiredElements = {
+    sourcePath,
+    scanButton,
+    controllerSelect,
+    endpointSelect,
+    flowchartButton,
+    endpointBox,
+    scanErrorBox,
+    scanWarningBox,
+    generateErrorBox,
+    generateWarningBox,
+    mermaidText,
+    preview,
+    copyButton
+};
+
+const missingElementNames = Object.entries(requiredElements)
+    .filter(([, element]) => !element)
+    .map(([name]) => name);
+
+if (missingElementNames.length) {
+    throw new Error(`flowchart画面の初期化に失敗しました。HTMLとJavaScriptのバージョンが一致していない可能性があります: ${missingElementNames.join(', ')}`);
+}
 
 let controllers = [];
 
@@ -30,7 +53,7 @@ scanButton.addEventListener('click', async () => {
     clearBox(generateWarningBox);
     setScanBusy(true);
     try {
-        const response = await fetch('/api/sequence/controllers', {
+        const response = await fetch('/api/flowchart/controllers', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sourcePath: sourcePath.value })
@@ -60,32 +83,27 @@ controllerSelect.addEventListener('change', () => {
 });
 
 endpointSelect.addEventListener('change', () => {
-    excludedClasses.disabled = !controllerSelect.value || !endpointSelect.value;
-    sequenceButton.disabled = !controllerSelect.value || !endpointSelect.value;
+    flowchartButton.disabled = !controllerSelect.value || !endpointSelect.value;
     updateEndpointInfo();
     resetDiagram();
 });
 
-sequenceButton.addEventListener('click', async () => {
+flowchartButton.addEventListener('click', async () => {
     clearBox(generateErrorBox);
     clearBox(generateWarningBox);
     setGenerateBusy(true);
     try {
-        const response = await fetch('/api/sequence/generate', {
+        const response = await fetch('/api/flowchart/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 sourcePath: sourcePath.value,
                 controllerClass: controllerSelect.value,
-                endpointMethod: endpointSelect.value,
-                excludedClasses: excludedClasses.value
-                    .split(/\r?\n/)
-                    .map(value => value.trim())
-                    .filter(Boolean)
+                endpointMethod: endpointSelect.value
             })
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'シーケンス図の生成に失敗しました。');
+        if (!response.ok) throw new Error(data.message || 'フローチャートの作成に失敗しました。');
 
         mermaidText.value = data.mermaid;
         showWarnings(generateWarningBox, data.warnings);
@@ -125,8 +143,7 @@ function renderControllers() {
 
 function renderEndpoints(controller) {
     endpointSelect.innerHTML = '';
-    excludedClasses.disabled = true;
-    sequenceButton.disabled = true;
+    flowchartButton.disabled = true;
 
     if (!controller) {
         endpointSelect.append(new Option('先にControllerを選択してください', ''));
@@ -154,8 +171,7 @@ function renderEndpoints(controller) {
 
     if (endpoints.length === 1) {
         endpointSelect.value = endpoints[0].methodName;
-        excludedClasses.disabled = false;
-        sequenceButton.disabled = false;
+        flowchartButton.disabled = false;
         updateEndpointInfo();
         return;
     }
@@ -185,7 +201,7 @@ function updateEndpointInfo() {
 }
 
 async function renderMermaid(text) {
-    const id = `sequence-${Date.now()}`;
+    const id = `flowchart-${Date.now()}`;
     const { svg } = await mermaid.render(id, extractMermaidSource(text));
     preview.innerHTML = svg;
     preview.classList.remove('empty');
@@ -200,15 +216,14 @@ function extractMermaidSource(text) {
 
 function resetDiagram() {
     mermaidText.value = '';
-    excludedClasses.disabled = !controllerSelect.value || !endpointSelect.value;
     clearBox(generateErrorBox);
     clearBox(generateWarningBox);
     clearPreview();
-    sequenceButton.disabled = !controllerSelect.value || !endpointSelect.value;
+    flowchartButton.disabled = !controllerSelect.value || !endpointSelect.value;
 }
 
 function clearPreview() {
-    preview.textContent = 'Endpointを選択してシーケンス図を生成するとここに表示されます。';
+    preview.textContent = 'Endpointを選択してフローチャートを作成するとここに表示されます。';
     preview.classList.add('empty');
     copyButton.disabled = true;
 }
@@ -230,6 +245,6 @@ function setScanBusy(busy) {
 }
 
 function setGenerateBusy(busy) {
-    sequenceButton.disabled = busy;
-    sequenceButton.textContent = busy ? '生成中...' : 'シーケンス図生成';
+    flowchartButton.disabled = busy;
+    flowchartButton.textContent = busy ? '作成中...' : 'フローチャート作成';
 }
