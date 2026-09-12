@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
 import erd.service.model.JoinRelation;
@@ -24,7 +25,7 @@ import net.sf.jsqlparser.util.TablesNamesFinder;
 @Component
 public class SqlAnalyzer {
 
-	private static final String IDENT = "(?:\\\"[^\\\"]+\\\"|[A-Za-z_][A-Za-z0-9_$]*)";
+	private static final String IDENT = "\"[^\"]+\"|[A-Za-z_][A-Za-z0-9_$]*";
 	private static final String QUALIFIED = IDENT + "(?:\\s*\\.\\s*" + IDENT + ")?";
 	private static final String COLUMN_QUALIFIER = QUALIFIED;
 
@@ -47,7 +48,7 @@ public class SqlAnalyzer {
 			"(?is)(" + COLUMN_QUALIFIER + ")\\s*\\.\\s*(" + IDENT + ")");
 
 	private static final Pattern BARE_IDENTIFIER_PATTERN = Pattern.compile(
-			"(?i)(?<![A-Za-z0-9_$\\.])(" + IDENT + ")(?![A-Za-z0-9_$\\.])");
+            "(?i)(?<![A-Za-z0-9_$.])(" + IDENT + ")(?![A-Za-z0-9_$.])");
 
 	private static final Pattern STRING_OR_COMMENT_PATTERN = Pattern.compile(
 			"(?s)'(?:''|[^'])*'|--[^\\r\\n]*|/\\*.*?\\*/");
@@ -89,6 +90,13 @@ public class SqlAnalyzer {
 		List<JoinRelation> relations = extractJoinRelations(sql, aliases);
 		Map<String, Set<String>> referencedColumnsByTable = extractQualifiedReferencedColumns(sql, aliases);
 		Set<String> unqualifiedReferencedColumns = extractUnqualifiedReferencedColumns(sql);
+		List<String> warnings = createWarnings(sql, actualTables, relations);
+
+		return new SqlAnalysis(actualTables, aliases, relations, referencedColumnsByTable,
+				unqualifiedReferencedColumns, warnings.stream().distinct().toList());
+	}
+
+	private static @NonNull List<String> createWarnings(String sql, Set<String> actualTables, List<JoinRelation> relations) {
 		List<String> warnings = new ArrayList<>();
 
 		if (actualTables.isEmpty()) {
@@ -104,9 +112,7 @@ public class SqlAnalyzer {
 		if (sql.contains("(") && sql.toLowerCase(Locale.ROOT).contains("select")) {
 			warnings.add("サブクエリを含む場合、JOIN関係の抽出はトップレベルの一般的なJOIN構文を主対象とします。");
 		}
-
-		return new SqlAnalysis(actualTables, aliases, relations, referencedColumnsByTable,
-				unqualifiedReferencedColumns, warnings.stream().distinct().toList());
+		return warnings;
 	}
 
 	private Set<String> mergeDeclaredTableNames(String sql, Set<String> parserTables) {

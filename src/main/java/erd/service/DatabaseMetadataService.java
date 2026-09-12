@@ -83,7 +83,7 @@ public class DatabaseMetadataService {
 		if (parts.isEmpty()) {
 			throw new IllegalArgumentException("テーブル名が空です。");
 		}
-		String table = parts.get(parts.size() - 1).databaseName();
+		String table = parts.getLast().databaseName();
 		String schema = parts.size() >= 2 ? parts.get(parts.size() - 2).databaseName() : null;
 		return new QualifiedTableName(schema, table);
 	}
@@ -159,9 +159,8 @@ public class DatabaseMetadataService {
 		Set<String> uniqueColumnSingleSet = makeUniqueColumnSingleSet(uniqueColumnList, pkColumnSet);
 		List<ColumnMetadata> columnMetadataList = makeColumnMetadataList(rawColumnList, pkColumnSet,
 				uniqueColumnSingleSet);
-		TableMetadata TableMetadata = new TableMetadata(schema, table, tableComment, columnMetadataList, pkColumnSet,
-				uniqueColumnSingleSet);
-		return TableMetadata;
+        return new TableMetadata(schema, table, tableComment, columnMetadataList, pkColumnSet,
+                uniqueColumnSingleSet);
 	}
 
 	/**

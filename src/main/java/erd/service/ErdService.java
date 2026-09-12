@@ -58,7 +58,6 @@ public class ErdService {
 		String mermaid = mermaidGenerator.generate(analysis, metadata);
 		List<String> tableNameList = tableNameSet.stream().toList();
 		List<String> distinctWarningList = warnings.stream().distinct().toList();
-		ErdResponse erdResponse = new ErdResponse(mermaid, tableNameList, distinctWarningList);
-		return erdResponse;
+        return new ErdResponse(mermaid, tableNameList, distinctWarningList);
 	}
 }

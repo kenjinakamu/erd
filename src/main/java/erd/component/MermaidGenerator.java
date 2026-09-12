@@ -491,8 +491,7 @@ public class MermaidGenerator {
 	}
 
 	/**
-	 * PostgreSQLのデータ型をMermaid ER Diagramで表示できる形式へ整形する。
-	 *
+	 * PostgreSQLのデータ型をMermaid ER Diagramで表示できる形式へ整形する。<br>
 	 * 例:
 	 *   numeric(12,2)       -> numeric(12,2)
 	 *   varchar(20)         -> varchar(20)
