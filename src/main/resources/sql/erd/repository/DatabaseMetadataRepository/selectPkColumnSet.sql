@@ -1,12 +1,19 @@
 SELECT
-    lower(t2.column_name)
+    lower(a.attname)
 FROM
-    information_schema.table_constraints t1
-    JOIN information_schema.key_column_usage t2
-    ON t1.constraint_name = t2.constraint_name
-    AND t1.table_schema = t2.table_schema
-    AND t1.table_name = t2.table_name
+    pg_catalog.pg_constraint con
+        JOIN pg_catalog.pg_class c
+             ON c.oid = con.conrelid
+        JOIN pg_catalog.pg_namespace n
+             ON n.oid = c.relnamespace
+        JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS key(attnum, ord)
+             ON TRUE
+        JOIN pg_catalog.pg_attribute a
+             ON a.attrelid = c.oid
+                 AND a.attnum = key.attnum
 WHERE
-    t1.constraint_type = 'PRIMARY KEY'
-    AND t1.table_schema = #{schema}
-    AND t1.table_name = #{table}
+    con.contype = 'p'
+  AND n.nspname = #{schema}
+  AND c.relname = #{table}
+ORDER BY
+    key.ord

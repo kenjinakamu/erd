@@ -170,22 +170,17 @@ final class DiagramBuilder {
 	}
 
 	private JavaComponent selectCandidate(JavaComponent caller, List<JavaComponent> candidates) {
-		return candidates.stream()
-				.sorted(Comparator
-						.comparing((JavaComponent c) -> !c.packageName().equals(caller.packageName()))
-						.thenComparing(JavaComponent::qualifiedName))
-				.findFirst().orElseThrow();
+		return candidates.stream().min(Comparator
+                .comparing((JavaComponent c) -> !c.packageName().equals(caller.packageName()))
+                .thenComparing(JavaComponent::qualifiedName)).orElseThrow();
 	}
 
 	private boolean allowedLayerTransition(ComponentLayer from, ComponentLayer to) {
 		return switch (from) {
-			case CONTROLLER -> to == ComponentLayer.SERVICE
+			case CONTROLLER, SERVICE -> to == ComponentLayer.SERVICE
 					|| to == ComponentLayer.COMPONENT
 					|| to == ComponentLayer.REPOSITORY;
-			case SERVICE -> to == ComponentLayer.SERVICE
-					|| to == ComponentLayer.COMPONENT
-					|| to == ComponentLayer.REPOSITORY;
-			case COMPONENT -> to == ComponentLayer.COMPONENT
+            case COMPONENT -> to == ComponentLayer.COMPONENT
 					|| to == ComponentLayer.REPOSITORY;
 			case REPOSITORY -> false;
 		};
@@ -197,18 +192,13 @@ final class DiagramBuilder {
 	}
 
 	private String variableName(Expression scope) {
-		if (scope == null) {
-			return StringUtils.EMPTY;
-		}
-
-		if (scope instanceof NameExpr name) {
-			return name.getNameAsString();
-		}
-		if (scope instanceof FieldAccessExpr field) {
-			return field.getNameAsString();
-		}
-		return null;
-	}
+        return switch (scope) {
+            case null -> StringUtils.EMPTY;
+            case NameExpr name -> name.getNameAsString();
+            case FieldAccessExpr field -> field.getNameAsString();
+            default -> null;
+        };
+    }
 
 	String build() {
 		List<String> lines = new ArrayList<>();

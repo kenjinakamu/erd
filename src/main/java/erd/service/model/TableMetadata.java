@@ -6,6 +6,7 @@ import java.util.Set;
 public record TableMetadata(
 		String schema,
 		String name,
+		String comment,
 		List<ColumnMetadata> columnMetadataList,
 		Set<String> primaryKeyColumnSet,
 		Set<String> uniqueSingleColumnSet) {

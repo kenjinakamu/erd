@@ -13,7 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.AssignExpr;
 import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.Expression;
@@ -179,7 +178,7 @@ public class FlowchartService {
             if (ifStmt.getElseStmt().isPresent()) {
                 Statement elseStmt = ifStmt.getElseStmt().orElseThrow();
                 if (elseStmt.isIfStmt()) {
-                    elseExits = processStatementWithLabel(elseStmt, decision, "No", context);
+                    elseExits = processStatementWithLabel(elseStmt, decision, context);
                 } else {
                     elseExits = processBranch(elseStmt, decision, "No", context);
                 }
@@ -273,11 +272,9 @@ public class FlowchartService {
                     return true;
                 }
                 // "".equals(value) / value.equals("")
-                if (name.equals("equals") && call.getArguments().size() == 1
+                return name.equals("equals") && call.getArguments().size() == 1
                         && (call.getScope().map(this::isEmptyStringLiteral).orElse(false)
-                        || isEmptyStringLiteral(call.getArgument(0)))) {
-                    return true;
-                }
+                        || isEmptyStringLiteral(call.getArgument(0)));
             }
             return false;
         }
@@ -312,9 +309,9 @@ public class FlowchartService {
             return expr instanceof IntegerLiteralExpr literal && "0".equals(literal.getValue());
         }
 
-        private List<String> processStatementWithLabel(Statement statement, String from, String label, MethodContext context) {
+        private List<String> processStatementWithLabel(Statement statement, String from, MethodContext context) {
             String marker = node("else", Shape.PROCESS);
-            edge(from, marker, label);
+            edge(from, marker, "No");
             return processStatement(statement, List.of(marker), context);
         }
 
@@ -492,18 +489,14 @@ public class FlowchartService {
         }
 
         private JavaComponent selectCandidate(JavaComponent caller, List<JavaComponent> candidates) {
-            return candidates.stream()
-                    .sorted(Comparator
-                            .comparing((JavaComponent c) -> !c.packageName().equals(caller.packageName()))
-                            .thenComparing(JavaComponent::qualifiedName))
-                    .findFirst().orElseThrow();
+            return candidates.stream().min(Comparator
+                    .comparing((JavaComponent c) -> !c.packageName().equals(caller.packageName()))
+                    .thenComparing(JavaComponent::qualifiedName)).orElseThrow();
         }
 
         private boolean allowedLayerTransition(ComponentLayer from, ComponentLayer to) {
             return switch (from) {
-                case CONTROLLER -> to == ComponentLayer.SERVICE || to == ComponentLayer.COMPONENT;
-                case SERVICE -> to == ComponentLayer.SERVICE || to == ComponentLayer.COMPONENT;
-                case COMPONENT -> to == ComponentLayer.SERVICE || to == ComponentLayer.COMPONENT;
+                case CONTROLLER, SERVICE, COMPONENT -> to == ComponentLayer.SERVICE || to == ComponentLayer.COMPONENT;
                 case REPOSITORY -> false;
             };
         }

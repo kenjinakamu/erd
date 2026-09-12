@@ -9,6 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import erd.component.MermaidGenerator;
+import erd.component.SqlAnalyzer;
 import erd.controller.dto.ErdResponse;
 import erd.service.model.SqlAnalysis;
 import erd.service.model.TableMetadata;
@@ -24,8 +26,8 @@ public class ErdService {
 	private final MermaidGenerator mermaidGenerator;
 
 	public ErdService(SqlAnalyzer sqlAnalyzer,
-			DatabaseMetadataService metadataService,
-			MermaidGenerator mermaidGenerator) {
+					  DatabaseMetadataService metadataService,
+					  MermaidGenerator mermaidGenerator) {
 		this.sqlAnalyzer = sqlAnalyzer;
 		this.metadataService = metadataService;
 		this.mermaidGenerator = mermaidGenerator;
@@ -44,12 +46,13 @@ public class ErdService {
 			String lowerTableName = StringUtils.toRootLowerCase(tableName);
 			if (!metadata.containsKey(lowerTableName)) {
 				warnings.add("PostgreSQLからテーブル定義を取得できませんでした: " + tableName +
-						"（search_path / schema / 権限を確認してください）");
+						"（schema / search_path / 権限を確認してください）");
 			}
 		}
 
 		if (CollectionUtils.isEmpty(metadata)) {
-			throw new IllegalArgumentException("対象テーブルのメタデータを取得できませんでした。");
+			throw new IllegalArgumentException("対象テーブルのメタデータを取得できませんでした。解析対象: "
+					+ String.join(", ", tableNameSet));
 		}
 
 		String mermaid = mermaidGenerator.generate(analysis, metadata);

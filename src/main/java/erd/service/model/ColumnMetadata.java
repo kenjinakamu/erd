@@ -13,5 +13,7 @@ public record ColumnMetadata(
 		/** 主キー */
 		boolean primaryKey,
 		/** ユニーク */
-		boolean unique) {
+		boolean unique,
+		/** カラムコメント */
+		String comment) {
 }

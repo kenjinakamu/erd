@@ -15,16 +15,22 @@ import erd.repository.model.UniqueConstraintColumn;
 public interface DatabaseMetadataRepository {
 
 	/**
-	 * 現在のスキーマを取得
+	 * PostgreSQLのsearch_pathを、実際の名前解決順で取得
 	 */
 	@SelectProvider(ExternalSqlProvider.class)
-	String currentSchema();
+	List<String> searchPathSchemas();
 
 	/**
 	 * カラムをリストで取得
 	 */
 	@SelectProvider(ExternalSqlProvider.class)
 	List<RawColumn> selectRawColumnList(@Param("schema") String schema, @Param("table") String table);
+
+	/**
+	 * テーブルコメントを取得
+	 */
+	@SelectProvider(ExternalSqlProvider.class)
+	String selectTableComment(@Param("schema") String schema, @Param("table") String table);
 
 	/**
 	 * 主キーのカラムをセットで取得
@@ -36,5 +42,6 @@ public interface DatabaseMetadataRepository {
 	 * ユニーク制約のカラムを取得
 	 */
 	@SelectProvider(ExternalSqlProvider.class)
-	List<UniqueConstraintColumn> selectUniqueColumnList(@Param("schema") String schema, @Param("table") String table);
+	List<UniqueConstraintColumn> selectUniqueColumnList(
+			@Param("schema") String schema, @Param("table") String table);
 }

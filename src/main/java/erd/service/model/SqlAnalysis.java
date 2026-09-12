@@ -8,5 +8,7 @@ public record SqlAnalysis(
 		Set<String> tableNames,
 		Map<String, TableRef> qualifierToTable,
 		List<JoinRelation> relations,
+		Map<String, Set<String>> referencedColumnsByTable,
+		Set<String> unqualifiedReferencedColumns,
 		List<String> warnings) {
 }

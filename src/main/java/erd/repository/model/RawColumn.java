@@ -6,5 +6,7 @@ public record RawColumn(
 		/** データ型 */
 		String type,
 		/** NULL許容 */
-		boolean nullable) {
+		boolean nullable,
+		/** カラムコメント */
+		String comment) {
 }

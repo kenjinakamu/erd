@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import com.github.javaparser.ast.nodeTypes.NodeWithName;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -113,7 +114,7 @@ public class SourceCodeAnalyzer {
 				}
 
 				CompilationUnit cu = parseResult.getResult().orElseThrow();
-				String packageName = cu.getPackageDeclaration().map(pd -> pd.getNameAsString()).orElse("");
+				String packageName = cu.getPackageDeclaration().map(NodeWithName::getNameAsString).orElse("");
 
 				for (ClassOrInterfaceDeclaration type : cu.findAll(ClassOrInterfaceDeclaration.class)) {
 					if (type.findAncestor(ClassOrInterfaceDeclaration.class).isPresent()) {

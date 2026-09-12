@@ -41,9 +41,8 @@ public class ErdApiController {
 		if (StringUtils.isBlank(sql)) {
 			throw new IllegalArgumentException("SQLを入力してください。");
 		}
-		
-		ErdResponse response =erdService.generate(sql); 
-		return response;
+
+        return erdService.generate(sql);
 	}
 	
 	@ExceptionHandler(IllegalArgumentException.class)

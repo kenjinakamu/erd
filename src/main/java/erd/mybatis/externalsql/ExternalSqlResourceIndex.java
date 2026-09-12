@@ -51,13 +51,13 @@ final class ExternalSqlResourceIndex {
 
 	private static String logicalPath(Resource resource) throws IOException {
 		String location = resource.getURI().toString();
-		int markerIndex = location.lastIndexOf(JAR_SQL_MARKER);
-		if (markerIndex >= 0) {
-			return "sql/" + location.substring(markerIndex + JAR_SQL_MARKER.length());
+		int jarSqlIndex = location.lastIndexOf(JAR_SQL_MARKER);
+		if (0 <= jarSqlIndex) {
+			return "sql/" + location.substring(jarSqlIndex + JAR_SQL_MARKER.length());
 		}
-		markerIndex = location.lastIndexOf(SQL_MARKER);
-		if (markerIndex >= 0) {
-			return "sql/" + location.substring(markerIndex + SQL_MARKER.length());
+		int sqlIndex = location.lastIndexOf(SQL_MARKER);
+		if (0 <= sqlIndex) {
+			return "sql/" + location.substring(sqlIndex + SQL_MARKER.length());
 		}
 		throw new IllegalStateException("Cannot determine SQL resource path: " + resource.getDescription());
 	}

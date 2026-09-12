@@ -1,16 +1,19 @@
 SELECT
-    column_name AS name,
-    CASE
-        WHEN data_type IS NULL OR btrim(data_type) = '' THEN 'unknown'
-        WHEN udt_name IS NULL OR btrim(udt_name) = '' THEN data_type
-        WHEN upper(data_type) IN ('USER-DEFINED', 'ARRAY') THEN udt_name
-        ELSE data_type
-    END AS type,
-    is_nullable = 'YES' AS nullable
+    a.attname::varchar AS name,
+    pg_catalog.format_type(a.atttypid, a.atttypmod)::varchar AS type,
+    NOT a.attnotnull::boolean AS nullable,
+    pg_catalog.col_description(c.oid, a.attnum)::varchar AS comment
 FROM
-    information_schema.columns
+    pg_catalog.pg_class c
+        JOIN pg_catalog.pg_namespace n
+             ON n.oid = c.relnamespace
+        JOIN pg_catalog.pg_attribute a
+             ON a.attrelid = c.oid
 WHERE
-    table_schema = #{schema}
-    AND table_name = #{table}
+    n.nspname = #{schema}
+  AND c.relname = #{table}
+    AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
+    AND a.attnum > 0
+    AND NOT a.attisdropped
 ORDER BY
-    ordinal_position
+    a.attnum
